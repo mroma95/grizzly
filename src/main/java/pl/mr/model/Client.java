@@ -20,11 +20,11 @@ public class Client {
     private String firstName;
     @Column(name = "lastname")
     private String lastName;
-    @Digits(integer = 4,fraction = 0)
+    @Digits(integer = 4,fraction = 0,message = "This field must have 4 digits")
     private int pin;
-    @Digits(integer = 4,fraction = 0)
+    @Digits(integer = 4,fraction = 0,message = "This field must have 4 digits")
     private int identifier;
-    @OneToMany(mappedBy = "client")
+    @OneToMany(mappedBy = "client",cascade = CascadeType.ALL,fetch = FetchType.EAGER)
     @JsonIgnore
     private Set<Visit> visits = new HashSet<>();
 

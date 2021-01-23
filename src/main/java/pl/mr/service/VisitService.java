@@ -10,6 +10,7 @@ import pl.mr.repository.ClientRepository;
 import pl.mr.repository.DoctorRepository;
 import pl.mr.repository.VisitRepository;
 
+import java.time.DayOfWeek;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -28,58 +29,70 @@ public class VisitService {
         this.doctorRepository = doctorRepository;
     }
 
-    public void cancelVisit(int identifier, int pin, Visit visit) {
+    public ResponseEntity<String> cancelVisit(int identifier, int pin, Visit visit) {
         Client repoClient = clientRepository.findClientByIdentifier(identifier);
-        if ((identifier == repoClient.getIdentifier()) && (pin == repoClient.getPin())) {
+        if (repoClient == null){
+            return new ResponseEntity<>("Client with identifier "+identifier+" not exist",HttpStatus.BAD_REQUEST);
+        }
+        if (rightIdentifierAndPin(identifier, pin, repoClient)) {
             if (repoClient.getVisits().contains(visit)) {
-                repoClient.getVisits().remove(visit);
-                visitRepository.deleteVisitByYearAndMonthAndDayAndHourAndMin(visit.getYear(), visit.getMonth(), visit.getDay(), visit.getHour(), visit.getMin());
+                visitRepository.deleteVisitByDateAndStartTime(visit.getDate(), visit.getStartTime());
+                return new ResponseEntity<>("Visit cancelled",HttpStatus.OK);
+            }else {
+                return new ResponseEntity<>("You haven't visit on this date",HttpStatus.BAD_REQUEST);
             }
         }
+        return new ResponseEntity<>("You give wrong identifier or pin",HttpStatus.BAD_REQUEST);
+    }
+
+    private boolean rightIdentifierAndPin(int identifier, int pin, Client repoClient) {
+        return (identifier == repoClient.getIdentifier()) && (pin == repoClient.getPin());
     }
 
     public ResponseEntity<Visit> addVisit(int identifier, int pin, String lastname, Visit visit) {
         Client repoClient = clientRepository.findClientByIdentifier(identifier);
-        if ((identifier == repoClient.getIdentifier()) && (pin == repoClient.getPin())) {
+        if (repoClient == null){
+            return new ResponseEntity<>(null,HttpStatus.BAD_REQUEST);
+        }
+        if (rightIdentifierAndPin(identifier, pin, repoClient)) {
             Doctor doctor = doctorRepository.findDoctorByLastName(lastname);
             Set<Visit> visits = doctor.getVisits()
                     .stream()
-                    .filter(getVisitsPredicate(visit))
+                    .filter(v -> v.getDate().equals(visit.getDate()))
                     .collect(Collectors.toCollection(HashSet::new));
             if (visits.isEmpty()) {
                 return returnHttpOk(visit, repoClient, doctor);
-            } else if (visits.contains(visit) || visit.getMin() % 10 != 0) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            } else {
-                for (Visit v : visits) {
-                        if (Math.abs(v.getMin() - visit.getMin()) >= 10) {
-                            return returnHttpOk(visit, repoClient, doctor);
-                        } else {
-                            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-                        }
-                }
+            } else if (visits.contains(visit) || visit.getStartTime().getMinute() % 10 != 0
+                    || Math.abs(visit.getStartTime().getMinute() - visit.getEndTime().getMinute()) != 10) {
+                return new ResponseEntity<>(null,HttpStatus.BAD_REQUEST);
+            } else if (checkCanAddVisit(visit, visits)) {
+                return returnHttpOk(visit, repoClient, doctor);
             }
         }
-        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+
+        return new ResponseEntity<>(null,HttpStatus.BAD_REQUEST);
+    }
+    // do poprawy
+    private boolean checkCanAddVisit(Visit visit, Set<Visit> visits) {
+        return visits.stream()
+                .noneMatch(v -> (v.getStartTime().isBefore(visit.getStartTime()) && v.getEndTime().isAfter(visit.getEndTime()))
+                        || (v.getStartTime().isBefore(visit.getStartTime().plusMinutes(10)) && v.getEndTime().isAfter(visit.getEndTime().plusMinutes(10))));
     }
 
-    private Predicate<Visit> getVisitsPredicate(Visit visit) {
-        return v -> v.getYear() == visit.getYear() && v.getMonth() == visit.getMonth()
-                && v.getDay() == visit.getDay() && v.getHour() == visit.getHour();
-    }
 
     private ResponseEntity<Visit> returnHttpOk(Visit visit, Client repoClient, Doctor doctor) {
-        doctor.getVisits().add(visit);
         visit.setDoctor(doctor);
         visit.setClient(repoClient);
-        repoClient.getVisits().add(visit);
         visitRepository.save(visit);
         return new ResponseEntity<>(visit, HttpStatus.OK);
     }
 
-    public List<Visit> getVisitsByDoctor(String lastName, Visit visit) {
+    public ResponseEntity<List<Visit>> getVisitsByDoctor(String lastName, Visit visit) {
         Doctor doctor = doctorRepository.findDoctorByLastName(lastName);
-        List<Visit> allByDoctor = visitRepository.findByDoctorIdAndYearAndMonthAndDay(doctor.getId(), visit.getYear(), visit.getMonth(), visit.getDay());
-        return allByDoctor;
+        List<Visit> allByDoctor = visitRepository.findByDoctorIdAndDate(doctor.getId(), visit.getDate());
+        if (allByDoctor.isEmpty()){
+            return new ResponseEntity<>(null,HttpStatus.OK);
+        }
+        return new ResponseEntity<>(allByDoctor,HttpStatus.OK);
     }
 }

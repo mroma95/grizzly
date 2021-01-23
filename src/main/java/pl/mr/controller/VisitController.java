@@ -21,8 +21,8 @@ public class VisitController {
 
     @Transactional
     @RequestMapping(method = RequestMethod.DELETE, value = "/{identifier}/{pin}")
-    public void deleteVisit(@PathVariable(name = "identifier") int identifier, @PathVariable(name = "pin") int pin, @RequestBody @Valid Visit visit) {
-        visitService.cancelVisit(identifier, pin, visit);
+    public ResponseEntity<String> deleteVisit(@PathVariable(name = "identifier") int identifier, @PathVariable(name = "pin") int pin, @RequestBody @Valid Visit visit) {
+        return visitService.cancelVisit(identifier, pin, visit);
     }
 
     @RequestMapping(method = RequestMethod.POST, value = "/{identifier}/{pin}/{lastname}")
@@ -32,7 +32,7 @@ public class VisitController {
     }
 
     @RequestMapping(value = "/{lastname}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<Visit> getVisistsByDoctor(@PathVariable(name = "lastname") String lastname, @RequestBody @Valid Visit visit) {
+    public ResponseEntity<List<Visit>> getVisistsByDoctor(@PathVariable(name = "lastname") String lastname, @RequestBody @Valid Visit visit) {
         return visitService.getVisitsByDoctor(lastname, visit);
     }
 }

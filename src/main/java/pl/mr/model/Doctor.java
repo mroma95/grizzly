@@ -10,7 +10,6 @@ import java.util.Set;
 
 @Getter
 @Entity
-@Data
 public class Doctor {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,7 +18,7 @@ public class Doctor {
     private String firstName;
     @Column(name = "lastname")
     private String lastName;
-    @OneToMany(mappedBy = "doctor")
+    @OneToMany(mappedBy = "doctor",cascade = CascadeType.ALL,fetch = FetchType.EAGER)
     @JsonIgnore
     private Set<Visit> visits = new HashSet<>();
 
