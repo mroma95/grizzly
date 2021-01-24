@@ -24,7 +24,7 @@ public class Client {
     private int pin;
     @Digits(integer = 4,fraction = 0,message = "This field must have 4 digits")
     private int identifier;
-    @OneToMany(mappedBy = "client",fetch = FetchType.EAGER) //,cascade = CascadeType.ALL
+    @OneToMany(mappedBy = "client",fetch = FetchType.EAGER)
     @JsonIgnore
     private Set<Visit> visits = new HashSet<>();
 
