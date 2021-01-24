@@ -89,8 +89,8 @@ public class VisitService {
     private ResponseEntity<Visit> returnHttpOk(Visit visit, Client repoClient, Doctor doctor) {
         visit.setDoctor(doctor);
         visit.setClient(repoClient);
-        visitRepository.save(visit);
         visit.setEndTime(visit.getStartTime().plusMinutes(10));
+        visitRepository.save(visit);
         return new ResponseEntity<>(visit, HttpStatus.OK);
     }
 }

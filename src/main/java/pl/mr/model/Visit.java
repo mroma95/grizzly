@@ -8,7 +8,6 @@ import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
 import lombok.Data;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Objects;
@@ -48,11 +47,11 @@ public class Visit {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Visit visit = (Visit) o;
-        return Objects.equals(date, visit.date) && Objects.equals(startTime, visit.startTime) && Objects.equals(endTime, visit.endTime);
+        return Objects.equals(date, visit.date) && Objects.equals(startTime, visit.startTime);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(date, startTime, endTime);
+        return Objects.hash(date, startTime);
     }
 }

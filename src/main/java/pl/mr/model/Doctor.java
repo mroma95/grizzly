@@ -18,7 +18,7 @@ public class Doctor {
     private String firstName;
     @Column(name = "lastname")
     private String lastName;
-    @OneToMany(mappedBy = "doctor",cascade = CascadeType.ALL,fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "doctor",fetch = FetchType.EAGER) //,cascade = CascadeType.ALL
     @JsonIgnore
     private Set<Visit> visits = new HashSet<>();
 
